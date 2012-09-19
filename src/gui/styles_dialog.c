@@ -265,7 +265,6 @@ _gui_styles_dialog_run (gboolean edit,const char *name,int imgid)
   gtk_tree_view_set_model (GTK_TREE_VIEW(sd->items), GTK_TREE_MODEL(liststore));
 
   gtk_box_pack_start (box,GTK_WIDGET (sd->items),TRUE,TRUE,0);
-  
   if (edit)
     gtk_box_pack_start (box,GTK_WIDGET (sd->duplicate),FALSE,FALSE,0);
 
