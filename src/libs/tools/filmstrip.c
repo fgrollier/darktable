@@ -30,6 +30,7 @@
 #include "develop/develop.h"
 #include "libs/lib.h"
 #include "gui/accelerators.h"
+#include "dtgtk/button.h"
 #include "gui/gtk.h"
 #include "gui/drag_and_drop.h"
 
@@ -91,6 +92,10 @@ static gboolean _lib_filmstrip_button_press_callback(GtkWidget *widget, GdkEvent
 static gboolean _lib_filmstrip_button_release_callback(GtkWidget *widget, GdkEventButton *event, gpointer user_data);
 /* signal callback for collection change */
 static void _lib_filmstrip_collection_changed_callback(gpointer instance, gpointer user_data);
+/* signal callback for scrolling arrows clicked events */
+static gboolean _lib_filmstrip_scroll_button_clicked_callback(GtkWidget *w, gpointer user_data);
+/* actually scroll the filmstrip */
+static void _lib_filmstrip_scroll(dt_lib_filmstrip_t *strip, int direction);
 
 /* key accelerators callback */
 static gboolean _lib_filmstrip_copy_history_key_accel_callback(GtkAccelGroup *accel_group,
@@ -335,7 +340,21 @@ void gui_init(dt_lib_module_t *self)
 
 
   gtk_box_pack_start(GTK_BOX(self->widget), size_handle, FALSE, FALSE,0);
-  gtk_box_pack_start(GTK_BOX(self->widget), d->filmstrip, FALSE, FALSE,0);
+  
+  /* create the scrolling arrow buttons */
+  GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
+  GtkWidget *button = dtgtk_button_new(dtgtk_cairo_paint_solid_arrow, CPF_STYLE_FLAT|CPF_DO_NOT_USE_BORDER|CPF_DIRECTION_LEFT);
+  g_object_set_data(G_OBJECT (button), "direction", (gpointer)GDK_SCROLL_LEFT);
+  gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(hbox), d->filmstrip, TRUE, TRUE,0);
+  g_signal_connect (G_OBJECT (button), "clicked",
+                    G_CALLBACK( _lib_filmstrip_scroll_button_clicked_callback), self);
+  button = dtgtk_button_new(dtgtk_cairo_paint_solid_arrow, CPF_STYLE_FLAT|CPF_DO_NOT_USE_BORDER|CPF_DIRECTION_RIGHT);
+  g_object_set_data(G_OBJECT (button), "direction", (gpointer)GDK_SCROLL_RIGHT);
+  gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+  g_signal_connect (G_OBJECT (button), "clicked",
+                    G_CALLBACK( _lib_filmstrip_scroll_button_clicked_callback), self);
+  gtk_box_pack_start(GTK_BOX(self->widget), hbox, FALSE, FALSE,0);
 
 
   /* initialize view manager proxy */
@@ -449,16 +468,32 @@ static gboolean _lib_filmstrip_scroll_callback(GtkWidget *w,GdkEventScroll *e, g
   dt_lib_module_t *self = (dt_lib_module_t *)user_data;
   dt_lib_filmstrip_t *strip = (dt_lib_filmstrip_t *)self->data;
 
+  _lib_filmstrip_scroll(strip, e->direction);
+
+  return TRUE;
+}
+
+static gboolean _lib_filmstrip_scroll_button_clicked_callback(GtkWidget *w, gpointer user_data)
+{
+  dt_lib_module_t *self = (dt_lib_module_t *)user_data;
+  dt_lib_filmstrip_t *strip = (dt_lib_filmstrip_t *)self->data;
+  
+  _lib_filmstrip_scroll(strip, (int) g_object_get_data(G_OBJECT(w), "direction"));
+  
+  return TRUE;
+}
+
+static void _lib_filmstrip_scroll(dt_lib_filmstrip_t *strip, int direction)
+{
   /* change the offset */
-  if (strip->offset > 0 && (e->direction == GDK_SCROLL_UP || e->direction == GDK_SCROLL_LEFT))
+  if (strip->offset > 0 && (direction == GDK_SCROLL_UP || direction == GDK_SCROLL_LEFT))
     strip->offset--;
-  else if(strip->offset < strip->collection_count-1 && (e->direction == GDK_SCROLL_DOWN || e->direction == GDK_SCROLL_RIGHT))
+  else if(strip->offset < strip->collection_count-1 && (direction == GDK_SCROLL_DOWN || direction == GDK_SCROLL_RIGHT))
     strip->offset++;
   else
-    return TRUE;
+    return;
 
-  gtk_widget_queue_draw(self->widget);
-  return TRUE;
+  gtk_widget_queue_draw(strip->filmstrip);
 }
 
 static gboolean _lib_filmstrip_button_press_callback(GtkWidget *w, GdkEventButton *e, gpointer user_data)
