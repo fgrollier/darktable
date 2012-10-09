@@ -113,6 +113,9 @@ static gboolean _lib_filmstrip_ratings_key_accel_callback(GtkAccelGroup *accel_g
 static gboolean _lib_filmstrip_colorlabels_key_accel_callback(GtkAccelGroup *accel_group,
     GObject *aceeleratable, guint keyval,
     GdkModifierType modifier, gpointer data);
+static gboolean _lib_filmstrip_scroll_key_accel_callback(GtkAccelGroup *accel_group,
+    GObject *aceeleratable, guint keyval,
+    GdkModifierType modifier, gpointer data);
 
 /* drag'n'drop callbacks */
 static void _lib_filmstrip_dnd_get_callback(GtkWidget *widget, GdkDragContext *context, GtkSelectionData *selection_data,
@@ -172,6 +175,10 @@ void init_key_accels(dt_lib_module_t *self)
   dt_accel_register_lib(self, NC_("accel", "color green"), GDK_F3, 0);
   dt_accel_register_lib(self, NC_("accel", "color blue"), GDK_F4, 0);
   dt_accel_register_lib(self, NC_("accel", "color purple"), GDK_F5, 0);
+  
+  /* setup scrolling accelerators */
+  dt_accel_register_lib(self, NC_("accel", "scroll left"), 0, 0);
+  dt_accel_register_lib(self, NC_("accel", "scroll right"), 0, 0);
 }
 
 void connect_key_accels(dt_lib_module_t *self)
@@ -257,6 +264,18 @@ void connect_key_accels(dt_lib_module_t *self)
     g_cclosure_new(
       G_CALLBACK(_lib_filmstrip_colorlabels_key_accel_callback),
       (gpointer)4,NULL));
+  dt_accel_connect_lib(
+    self, "scroll left",
+    g_cclosure_new(
+      G_CALLBACK(_lib_filmstrip_scroll_key_accel_callback),
+      (gpointer)GDK_SCROLL_LEFT,NULL));
+  dt_accel_connect_lib(
+    self, "scroll right",
+    g_cclosure_new(
+      G_CALLBACK(_lib_filmstrip_scroll_key_accel_callback),
+      (gpointer)GDK_SCROLL_RIGHT,NULL));
+      
+  // Scrolling accels
 }
 
 void gui_init(dt_lib_module_t *self)
@@ -886,6 +905,16 @@ static gboolean _lib_filmstrip_colorlabels_key_accel_callback(GtkAccelGroup *acc
     gtk_widget_queue_draw(darktable.view_manager->proxy.filmstrip.module->widget);
   return TRUE;
 }
+
+static gboolean _lib_filmstrip_scroll_key_accel_callback(GtkAccelGroup *accel_group,
+    GObject *acceleratable, guint keyval,
+    GdkModifierType modifier, gpointer data)
+{
+  long int direction = (long int)data;
+  _lib_filmstrip_scroll(darktable.view_manager->proxy.filmstrip.module->data, direction);
+  return TRUE;
+}
+  
 
 static void
 _lib_filmstrip_dnd_get_callback(GtkWidget *widget, GdkDragContext *context, GtkSelectionData *selection_data,
