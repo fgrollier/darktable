@@ -1176,8 +1176,10 @@ void dt_ui_container_add_widget(dt_ui_t *ui, const dt_ui_container_t c, GtkWidge
     case DT_UI_CONTAINER_PANEL_TOP_CENTER:
     case DT_UI_CONTAINER_PANEL_CENTER_TOP_CENTER:
     case DT_UI_CONTAINER_PANEL_CENTER_BOTTOM_CENTER:
-    case DT_UI_CONTAINER_PANEL_BOTTOM:
       gtk_box_pack_start(GTK_BOX(ui->containers[c]),w,TRUE,TRUE,2);
+      break;
+    case DT_UI_CONTAINER_PANEL_BOTTOM:
+      gtk_box_pack_start(GTK_BOX(ui->containers[c]),w,TRUE,TRUE,0);
       break;
 
     default:
@@ -1433,12 +1435,12 @@ static void _ui_init_panel_bottom(dt_ui_t *ui, GtkWidget *container)
 
   /* create the panel box */
   ui->panels[DT_UI_PANEL_BOTTOM] = widget = gtk_hbox_new(FALSE, 0);
-  gtk_table_attach(GTK_TABLE(container), widget, 1, 4, 2, 3,
+  gtk_table_attach(GTK_TABLE(container), widget, 0, 5, 2, 3,
                    GTK_EXPAND | GTK_FILL | GTK_SHRINK, GTK_SHRINK, 0, 0);
 
   /* add the container */
   ui->containers[DT_UI_CONTAINER_PANEL_BOTTOM] = gtk_hbox_new(TRUE,0);
-  gtk_box_pack_start(GTK_BOX(widget), ui->containers[DT_UI_CONTAINER_PANEL_BOTTOM], TRUE, TRUE,  DT_UI_PANEL_MODULE_SPACING);
+  gtk_box_pack_start(GTK_BOX(widget), ui->containers[DT_UI_CONTAINER_PANEL_BOTTOM], TRUE, TRUE,  0);
 }
 
 
